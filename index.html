@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WeCam — Multi-Camera Live Matrix & Monitor</title>
+  <meta name="description" content="Multi-camera live streaming, monitoring and inspection studio with simultaneous multi-cam feeds, C922 auto-detect, 1080p/60fps, and snapshot capture.">
+  <meta name="theme-color" content="#070a12">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a13;
+      --card-bg: rgba(17, 24, 39, 0.82);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(59, 130, 246, 0.35);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #070a13 55%);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 20px 40px;
+    }
+
+    /* Top Sticky App Header */
+    .app-header {
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      padding: 12px 20px;
+      border-radius: 14px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-sub {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-left: 1px solid rgba(255, 255, 255, 0.15);
+      padding-left: 10px;
+      margin-left: 2px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge.green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+
+    .global-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      border: 1px solid transparent;
+      user-select: none;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: #1e293b;
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #f1f5f9;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-accent {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: rgba(6, 182, 212, 0.4);
+      color: #67e8f9;
+    }
+    .btn-accent:hover {
+      background: rgba(6, 182, 212, 0.28);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.28);
+    }
+
+    .btn-icon-only {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+    }
+
+    .layout-switcher {
+      display: flex;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .layout-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .layout-btn.active, .layout-btn:hover {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    /* Multi-Cam Grid */
+    .camera-matrix {
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto 24px;
+      display: grid;
+      gap: 16px;
+      transition: all 0.3s ease;
+    }
+
+    /* Dynamic Grid Columns */
+    .camera-matrix[data-cols="1"] { grid-template-columns: 1fr; }
+    .camera-matrix[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+    .camera-matrix[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+    .camera-matrix[data-cols="4"] { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+
+    @media (max-width: 900px) {
+      .camera-matrix[data-cols="2"],
+      .camera-matrix[data-cols="3"] {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Individual Camera Card */
+    .cam-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .cam-card:hover {
+      border-color: var(--card-border-hover);
+    }
+
+    .cam-card-header {
+      padding: 10px 14px;
+      background: rgba(10, 15, 28, 0.85);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .cam-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .cam-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+    .cam-status-dot.active {
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+    }
+    .cam-status-dot.error {
+      background: var(--danger);
+      box-shadow: 0 0 10px var(--danger);
+    }
+
+    .device-select {
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      outline: none;
+      flex: 1;
+      max-width: 320px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .device-select:focus {
+      border-color: var(--primary);
+    }
+
+    .res-select {
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .cam-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Video Viewport */
+    .cam-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #020617;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cam-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      transition: transform 0.2s ease;
+    }
+
+    .cam-viewport video.mirrored {
+      transform: scaleX(-1);
+    }
+
+    /* Video Grid Overlay */
+    .cam-grid-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .cam-grid-overlay.visible {
+      display: grid;
+    }
+    .grid-cell {
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+
+    /* HUD Overlay */
+    .cam-hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(3, 7, 18, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(6px);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      pointer-events: none;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .hud-row {
+      display: flex;
+      gap: 8px;
+    }
+    .hud-label { color: var(--text-muted); }
+    .hud-val { color: #38bdf8; font-weight: 700; }
+
+    /* Floating Video Controls Toolbar */
+    .cam-floating-toolbar {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 4px 8px;
+      border-radius: 8px;
+      opacity: 0.9;
+      transition: opacity 0.2s;
+      z-index: 6;
+    }
+
+    .cam-card:hover .cam-floating-toolbar {
+      opacity: 1;
+    }
+
+    .tool-btn {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      padding: 6px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    .tool-btn.active {
+      background: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    /* Zoom slider container inside floating toolbar */
+    .cam-zoom-box {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      padding-right: 6px;
+      margin-right: 2px;
+    }
+    .cam-zoom-slider {
+      width: 60px;
+      cursor: pointer;
+    }
+
+    .cam-error-banner {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.92);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+      gap: 12px;
+      z-index: 8;
+    }
+    .cam-error-msg {
+      font-size: 0.85rem;
+      color: #fca5a5;
+      max-width: 80%;
+    }
+
+    /* Fullscreen Mode for single card */
+    .cam-card:fullscreen {
+      border-radius: 0;
+      border: none;
+      width: 100vw;
+      height: 100vh;
+    }
+    .cam-card:fullscreen .cam-viewport {
+      height: calc(100vh - 54px);
+    }
+
+    /* Empty state */
+    .empty-state {
+      grid-column: 1 / -1;
+      background: var(--card-bg);
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .empty-state h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .empty-state p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      max-width: 440px;
+    }
+
+    /* Snapshot Gallery */
+    .gallery-container {
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
+    .gallery-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .snapshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .snap-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .snap-card img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+      background: #000;
+    }
+
+    .snap-details {
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .snap-cam-label {
+      color: #93c5fd;
+      font-weight: 600;
+      max-width: 130px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .download-link {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.78rem;
+    }
+    .download-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header & Global Multi-Cam Controls -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-title">
+        <span>📹</span> WeCam Studio
+      </div>
+      <span class="brand-sub">Multi-Camera Live Matrix</span>
+      <span id="globalCamBadge" class="badge green">Scanning...</span>
+    </div>
+
+    <div class="global-toolbar">
+      <!-- Layout Mode Selector -->
+      <div class="layout-switcher" title="Change Multi-Camera Grid Layout">
+        <button class="layout-btn active" data-cols="1" title="Single Large View">1×1</button>
+        <button class="layout-btn" data-cols="2" title="Side-by-Side Dual View">2×1</button>
+        <button class="layout-btn" data-cols="3" title="3-Column View">3×1</button>
+        <button class="layout-btn" data-cols="4" title="Multi-Grid / Quad">Grid</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <button id="btnAddCam" class="btn btn-primary" title="Add another live camera viewport">
+        <span>➕</span> Add Camera View
+      </button>
+
+      <button id="btnLaunchAll" class="btn btn-secondary" title="Open all detected cameras simultaneously">
+        <span>⚡</span> Launch All Cameras
+      </button>
+
+      <button id="btnSnapAll" class="btn btn-accent" title="Take a snapshot from all live cameras at once">
+        <span>📸</span> Snap All
+      </button>
+
+      <a href="https://github.com/sureshmagnolia/wecam" target="_blank" class="btn btn-secondary btn-icon-only" title="Open GitHub Repository">
+        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Live Multi-Camera Matrix -->
+  <main class="camera-matrix" id="cameraMatrix" data-cols="1">
+    <!-- Camera view cards rendered here dynamically -->
+  </main>
+
+  <!-- Snapshot Gallery -->
+  <section class="gallery-container">
+    <div class="gallery-header">
+      <div class="gallery-title">
+        <span>🖼️</span> Captured Snapshots
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="snapTotalBadge" style="font-size: 0.8rem; color: var(--text-muted);">0 snapshots</span>
+        <button id="btnClearSnaps" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" title="Clear snapshots gallery">Clear</button>
+      </div>
+    </div>
+    <div class="snapshots-grid" id="snapshotGallery"></div>
+  </section>
+
+  <!-- Hidden canvas for capturing frames -->
+  <canvas id="snapshotCanvas" style="display: none;"></canvas>
+
+  <script>
+    // State
+    let discoveredDevices = [];
+    let cameraCards = [];
+    let nextCamId = 1;
+    let globalSnapshots = [];
+
+    const cameraMatrix = document.getElementById('cameraMatrix');
+    const globalCamBadge = document.getElementById('globalCamBadge');
+    const btnAddCam = document.getElementById('btnAddCam');
+    const btnLaunchAll = document.getElementById('btnLaunchAll');
+    const btnSnapAll = document.getElementById('btnSnapAll');
+    const layoutButtons = document.querySelectorAll('.layout-btn');
+    const snapshotGallery = document.getElementById('snapshotGallery');
+    const snapTotalBadge = document.getElementById('snapTotalBadge');
+    const btnClearSnaps = document.getElementById('btnClearSnaps');
+    const snapshotCanvas = document.getElementById('snapshotCanvas');
+
+    let userManuallySelectedLayout = false;
+
+    // Layout switcher
+    layoutButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        userManuallySelectedLayout = true;
+        layoutButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        cameraMatrix.setAttribute('data-cols', btn.dataset.cols);
+      });
+    });
+
+    // Device Discovery
+    async function enumerateAllDevices() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        discoveredDevices = devices.filter(d => d.kind === 'videoinput');
+        
+        let c922Count = 0;
+        discoveredDevices.forEach(d => {
+          if (/c922|logitech/i.test(d.label)) c922Count++;
+        });
+
+        if (discoveredDevices.length === 0) {
+          globalCamBadge.textContent = 'No Cameras Found';
+          globalCamBadge.className = 'badge';
+        } else {
+          globalCamBadge.textContent = `${discoveredDevices.length} Camera${discoveredDevices.length > 1 ? 's' : ''} Ready${c922Count > 0 ? ' (C922 Detected)' : ''}`;
+          globalCamBadge.className = 'badge green';
+        }
+
+        // Update dropdowns on existing cards
+        cameraCards.forEach(card => populateDeviceSelect(card));
+        return discoveredDevices;
+      } catch (err) {
+        console.error('Device enumeration error:', err);
+        globalCamBadge.textContent = 'Device Error';
+        return [];
+      }
+    }
+
+    function populateDeviceSelect(card) {
+      const select = card.element.querySelector('.device-select');
+      const currentVal = card.deviceId;
+      select.innerHTML = '';
+
+      if (discoveredDevices.length === 0) {
+        select.innerHTML = '<option value="">No cameras available</option>';
+        return;
+      }
+
+      discoveredDevices.forEach((dev, idx) => {
+        const opt = document.createElement('option');
+        opt.value = dev.deviceId;
+        const label = dev.label || `Camera ${idx + 1}`;
+        let text = label;
+        if (/c922|logitech|pro stream/i.test(label)) {
+          text = `★ ${label} (C922)`;
+        }
+        opt.text = text;
+        select.appendChild(opt);
+      });
+
+      if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    // Create a new Camera View Card
+    async function addCameraCard(requestedDeviceId = null) {
+      const camId = `cam_${nextCamId++}`;
+      
+      // Pick deviceId if not specified: pick first unused or first available
+      if (!requestedDeviceId && discoveredDevices.length > 0) {
+        const usedDeviceIds = cameraCards.map(c => c.deviceId).filter(Boolean);
+        const unused = discoveredDevices.find(d => !usedDeviceIds.includes(d.deviceId));
+        requestedDeviceId = unused ? unused.deviceId : discoveredDevices[0].deviceId;
+      }
+
+      const cardEl = document.createElement('div');
+      cardEl.className = 'cam-card';
+      cardEl.id = camId;
+
+      cardEl.innerHTML = `
+        <div class="cam-card-header">
+          <div class="cam-title-group">
+            <div class="cam-status-dot" title="Connection status"></div>
+            <select class="device-select" title="Change Camera Device">
+              <option value="">Selecting camera...</option>
+            </select>
+          </div>
+          <div class="cam-card-actions">
+            <select class="res-select" title="Stream Resolution">
+              <option value="1080" selected>1080p</option>
+              <option value="720">720p</option>
+              <option value="4k">4K</option>
+              <option value="native">Native</option>
+            </select>
+            <button class="btn btn-secondary btn-icon-only btn-remove" title="Remove this camera view">✕</button>
+          </div>
+        </div>
+
+        <div class="cam-viewport">
+          <video autoplay playsinline muted></video>
+
+          <div class="cam-grid-overlay">
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+          </div>
+
+          <div class="cam-hud">
+            <div class="hud-row"><span class="hud-label">CAM:</span><span class="hud-val hud-dev">Detecting</span></div>
+            <div class="hud-row"><span class="hud-label">RES:</span><span class="hud-val hud-res">0 × 0</span></div>
+            <div class="hud-row"><span class="hud-label">FPS:</span><span class="hud-val hud-fps">--</span></div>
+          </div>
+
+          <div class="cam-floating-toolbar">
+            <div class="cam-zoom-box">
+              <span>Zoom</span>
+              <input type="range" class="cam-zoom-slider" min="1" max="5" step="0.1" value="1" title="Hardware Zoom">
+              <span class="cam-zoom-text">1x</span>
+            </div>
+            <button class="tool-btn btn-mirror" title="Flip Mirror Horizontally">🪞</button>
+            <button class="tool-btn btn-grid" title="Toggle Alignment Grid">#</button>
+            <button class="tool-btn btn-fullscreen" title="Maximize View">⛶</button>
+            <button class="tool-btn btn-snap" style="color: #67e8f9; font-weight: 700;" title="Snapshot from this camera">📸</button>
+          </div>
+
+          <div class="cam-error-banner">
+            <span style="font-size: 1.5rem;">⚠️</span>
+            <div class="cam-error-msg">Camera not accessible</div>
+            <button class="btn btn-primary btn-retry" style="padding: 6px 12px; font-size: 0.8rem;">Retry</button>
+          </div>
+        </div>
+      `;
+
+      cameraMatrix.appendChild(cardEl);
+
+      const cardObj = {
+        id: camId,
+        element: cardEl,
+        deviceId: requestedDeviceId,
+        stream: null,
+        videoTrack: null,
+        video: cardEl.querySelector('video'),
+        statusDot: cardEl.querySelector('.cam-status-dot'),
+        deviceSelect: cardEl.querySelector('.device-select'),
+        resSelect: cardEl.querySelector('.res-select'),
+        hudDev: cardEl.querySelector('.hud-dev'),
+        hudRes: cardEl.querySelector('.hud-res'),
+        hudFps: cardEl.querySelector('.hud-fps'),
+        errorBanner: cardEl.querySelector('.cam-error-banner'),
+        errorMsg: cardEl.querySelector('.cam-error-msg'),
+        zoomBox: cardEl.querySelector('.cam-zoom-box'),
+        zoomSlider: cardEl.querySelector('.cam-zoom-slider'),
+        zoomText: cardEl.querySelector('.cam-zoom-text'),
+        gridOverlay: cardEl.querySelector('.cam-grid-overlay'),
+        btnMirror: cardEl.querySelector('.btn-mirror'),
+        btnGrid: cardEl.querySelector('.btn-grid'),
+        btnFullscreen: cardEl.querySelector('.btn-fullscreen'),
+        btnSnap: cardEl.querySelector('.btn-snap'),
+        btnRemove: cardEl.querySelector('.btn-remove'),
+        btnRetry: cardEl.querySelector('.btn-retry')
+      };
+
+      cameraCards.push(cardObj);
+      populateDeviceSelect(cardObj);
+
+      // Bind Card Events
+      cardObj.deviceSelect.addEventListener('change', () => {
+        cardObj.deviceId = cardObj.deviceSelect.value;
+        startCameraStream(cardObj);
+      });
+
+      cardObj.resSelect.addEventListener('change', () => {
+        startCameraStream(cardObj);
+      });
+
+      cardObj.btnMirror.addEventListener('click', () => {
+        cardObj.video.classList.toggle('mirrored');
+        cardObj.btnMirror.classList.toggle('active');
+      });
+
+      cardObj.btnGrid.addEventListener('click', () => {
+        cardObj.gridOverlay.classList.toggle('visible');
+        cardObj.btnGrid.classList.toggle('active');
+      });
+
+      cardObj.btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          cardObj.element.requestFullscreen().catch(err => console.warn(err));
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      cardObj.btnSnap.addEventListener('click', () => {
+        takeSnapshot(cardObj);
+      });
+
+      cardObj.btnRemove.addEventListener('click', () => {
+        removeCameraCard(cardObj);
+      });
+
+      cardObj.btnRetry.addEventListener('click', () => {
+        startCameraStream(cardObj);
+      });
+
+      cardObj.zoomSlider.addEventListener('input', async (e) => {
+        const val = parseFloat(e.target.value);
+        cardObj.zoomText.textContent = `${val}x`;
+        if (cardObj.videoTrack) {
+          try {
+            await cardObj.videoTrack.applyConstraints({ advanced: [{ zoom: val }] });
+          } catch(err) {
+            console.warn('Zoom constraint error:', err);
+          }
+        }
+      });
+
+      // Automatically adjust layout columns based on number of cards
+      autoAdjustLayout();
+
+      // Start stream
+      await startCameraStream(cardObj);
+      return cardObj;
+    }
+
+    // Start or switch stream for a specific card
+    async function startCameraStream(card) {
+      if (card.stream) {
+        card.stream.getTracks().forEach(t => t.stop());
+        card.stream = null;
+        card.videoTrack = null;
+      }
+
+      card.errorBanner.style.display = 'none';
+      card.statusDot.className = 'cam-status-dot';
+      card.hudFps.textContent = 'Connecting...';
+
+      const res = card.resSelect.value;
+      let width = 1920;
+      let height = 1080;
+      let frameRate = 30;
+
+      if (res === '720') {
+        width = 1280;
+        height = 720;
+        frameRate = 60;
+      } else if (res === '4k') {
+        width = 3840;
+        height = 2160;
+        frameRate = 30;
+      } else if (res === 'native') {
+        width = undefined;
+        height = undefined;
+        frameRate = undefined;
+      }
+
+      const constraints = {
+        video: {
+          deviceId: card.deviceId ? { exact: card.deviceId } : undefined,
+          width: width ? { ideal: width } : undefined,
+          height: height ? { ideal: height } : undefined,
+          frameRate: frameRate ? { ideal: frameRate } : undefined
+        },
+        audio: false
+      };
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        card.stream = stream;
+        card.video.srcObject = stream;
+        card.videoTrack = stream.getVideoTracks()[0];
+
+        card.video.onloadedmetadata = () => {
+          card.video.play();
+          card.statusDot.className = 'cam-status-dot active';
+          const settings = card.videoTrack.getSettings();
+          const label = card.videoTrack.label || 'Camera';
+
+          card.hudDev.textContent = label.length > 20 ? label.substring(0, 18) + '...' : label;
+          card.hudRes.textContent = `${card.video.videoWidth || settings.width} × ${card.video.videoHeight || settings.height}`;
+          card.hudFps.textContent = `${Math.round(settings.frameRate || 30)}fps`;
+
+          // Check zoom support
+          try {
+            const caps = card.videoTrack.getCapabilities ? card.videoTrack.getCapabilities() : {};
+            if (caps.zoom) {
+              card.zoomBox.style.display = 'flex';
+              card.zoomSlider.min = caps.zoom.min;
+              card.zoomSlider.max = caps.zoom.max;
+              card.zoomSlider.step = caps.zoom.step || 0.1;
+              card.zoomSlider.value = settings.zoom || caps.zoom.min;
+              card.zoomText.textContent = `${card.zoomSlider.value}x`;
+            } else {
+              card.zoomBox.style.display = 'none';
+            }
+          } catch(e) {}
+        };
+
+        // Re-enumerate to get full device labels if first load
+        await enumerateAllDevices();
+      } catch (err) {
+        console.error(`Camera stream error on ${card.id}:`, err);
+        card.statusDot.className = 'cam-status-dot error';
+        card.errorMsg.textContent = `${err.name || 'Error'}: ${err.message || 'Device in use or disconnected'}`;
+        card.errorBanner.style.display = 'flex';
+        card.hudFps.textContent = 'OFFLINE';
+      }
+    }
+
+    // Remove camera card
+    function removeCameraCard(card) {
+      if (card.stream) {
+        card.stream.getTracks().forEach(t => t.stop());
+      }
+      card.element.remove();
+      cameraCards = cameraCards.filter(c => c.id !== card.id);
+      autoAdjustLayout();
+    }
+
+    // Auto adjust grid columns
+    function autoAdjustLayout() {
+      const count = cameraCards.length;
+      let targetCols = '1';
+      if (count <= 1) targetCols = '1';
+      else if (count === 2) targetCols = '2';
+      else if (count === 3) targetCols = '3';
+      else targetCols = '4';
+
+      if (!userManuallySelectedLayout) {
+        cameraMatrix.setAttribute('data-cols', targetCols);
+        layoutButtons.forEach(b => {
+          b.classList.toggle('active', b.dataset.cols === targetCols);
+        });
+      }
+    }
+
+    // Snapshot function
+    function takeSnapshot(card) {
+      if (!card.video.videoWidth) return;
+      snapshotCanvas.width = card.video.videoWidth;
+      snapshotCanvas.height = card.video.videoHeight;
+      const ctx = snapshotCanvas.getContext('2d');
+
+      if (card.video.classList.contains('mirrored')) {
+        ctx.translate(snapshotCanvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(card.video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+      const dataUrl = snapshotCanvas.toDataURL('image/png');
+      const timeStr = new Date().toLocaleTimeString();
+      const devName = card.videoTrack ? card.videoTrack.label : 'Camera';
+
+      const snapCard = document.createElement('div');
+      snapCard.className = 'snap-card';
+      snapCard.innerHTML = `
+        <img src="${dataUrl}" alt="Snap from ${devName}" onclick="window.open('${dataUrl}')">
+        <div class="snap-details">
+          <span class="snap-cam-label" title="${devName}">📹 ${devName}</span>
+          <span>${snapshotCanvas.width}×${snapshotCanvas.height} · ${timeStr}</span>
+          <a href="${dataUrl}" download="wecam_${card.id}_${Date.now()}.png" class="download-link">Download</a>
+        </div>
+      `;
+      snapshotGallery.prepend(snapCard);
+      globalSnapshots.push(dataUrl);
+      snapTotalBadge.textContent = `${globalSnapshots.length} snapshot${globalSnapshots.length === 1 ? '' : 's'}`;
+    }
+
+    // Snap All Cameras
+    btnSnapAll.addEventListener('click', () => {
+      let count = 0;
+      cameraCards.forEach(card => {
+        if (card.stream && card.video.videoWidth) {
+          takeSnapshot(card);
+          count++;
+        }
+      });
+      if (count === 0) {
+        alert('No active camera streams to capture.');
+      }
+    });
+
+    // Add Camera Button
+    btnAddCam.addEventListener('click', () => {
+      addCameraCard();
+    });
+
+    // Launch All Cameras Button
+    btnLaunchAll.addEventListener('click', async () => {
+      if (discoveredDevices.length === 0) {
+        await enumerateAllDevices();
+      }
+      if (discoveredDevices.length === 0) {
+        alert('No camera devices detected on your system.');
+        return;
+      }
+
+      // Check which devices are not yet added
+      const activeDeviceIds = cameraCards.map(c => c.deviceId);
+      discoveredDevices.forEach(dev => {
+        if (!activeDeviceIds.includes(dev.deviceId)) {
+          addCameraCard(dev.deviceId);
+        }
+      });
+    });
+
+    // Clear snapshots
+    btnClearSnaps.addEventListener('click', () => {
+      snapshotGallery.innerHTML = '';
+      globalSnapshots = [];
+      snapTotalBadge.textContent = '0 snapshots';
+    });
+
+    // Initial page startup
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Prompt initial permission to populate labels
+      try {
+        const testStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        testStream.getTracks().forEach(t => t.stop());
+      } catch (e) {}
+
+      const devices = await enumerateAllDevices();
+      
+      // Auto-launch ONLY the primary camera on startup (prioritizing C922 if detected)
+      let initialDevId = null;
+      if (devices.length > 0) {
+        const c922 = devices.find(d => /c922|logitech/i.test(d.label));
+        initialDevId = c922 ? c922.deviceId : devices[0].deviceId;
+      }
+      await addCameraCard(initialDevId);
+    });
+
+    // Listen for device plug/unplug events
+    navigator.mediaDevices.addEventListener('devicechange', async () => {
+      await enumerateAllDevices();
+    });
+  </script>
+</body>
+</html>
